@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pocket Station</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #07080d;
+      --glass-panel: rgba(14, 18, 28, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --neon-cyan: #00f2fe;
+      --neon-cyan-dim: rgba(0, 242, 254, 0.18);
+      --neon-red: #ff3366;
+      --neon-red-deep: #e11d48;
+      --neon-emerald: #05df72;
+      --text-main: #f8fafc;
+      --text-dim: #94a3b8;
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-main);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      scrollbar-width: none; /* حذف قطعی اسکرول‌بار در فایرفاکس */
+      -ms-overflow-style: none; /* حذف قطعی در IE/Edge */
+    }
+
+    *::-webkit-scrollbar {
+      display: none !important; /* حذف نوار خاکستری پایین صفحه در کروم و وب‌کیت */
+      width: 0 !important;
+      height: 0 !important;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 85% 25%, rgba(0, 242, 254, 0.10) 0%, transparent 45%),
+        radial-gradient(circle at 50% 85%, rgba(0, 242, 254, 0.09) 0%, transparent 55%);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px 12px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 400px;
+      height: 100%;
+      max-height: 650px;
+      background: var(--glass-panel);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 16px 16px 78px 16px;
+      box-shadow: 
+        0 24px 50px rgba(0, 0, 0, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 0 35px rgba(0, 242, 254, 0.06);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 1.5px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.85;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 0 16px rgba(0, 242, 254, 0.35);
+    }
+
+    .deck-card {
+      background: rgba(8, 10, 18, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 18px;
+      padding: 12px 14px 10px;
+      text-align: center;
+      margin-bottom: 10px;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+    }
+
+    .now-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.25);
+    }
+
+    .wave-wrapper {
+      width: 100%;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    #wave-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 30px;
+      background: rgba(0, 0, 0, 0.5);
+      color: var(--text-dim);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 8px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #475569;
+      transition: all 0.3s;
+    }
+    .status-dot.live {
+      background: var(--neon-emerald);
+      box-shadow: 0 0 10px var(--neon-emerald);
+    }
+    .status-dot.loading {
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      animation: pulse 1s infinite alternate;
+    }
+    .status-dot.error {
+      background: var(--neon-red-deep);
+      box-shadow: 0 0 8px var(--neon-red-deep);
+    }
+
+    @keyframes pulse { from { opacity: 0.3; } to { opacity: 1; } }
+
+    .controls-dock {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+      gap: 10px;
+    }
+
+    .arch-volume {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(18, 22, 34, 0.85);
+      padding: 8px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(0, 242, 254, 0.16);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    }
+
+    .arch-volume svg {
+      width: 15px;
+      height: 15px;
+      fill: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .vol-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.14);
+      outline: none;
+      cursor: pointer;
+      touch-action: none;
+    }
+    .vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+    .vol-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .vol-slider::-moz-range-thumb {
+      width: 13px;
+      height: 13px;
+      border: none;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      cursor: pointer;
+    }
+
+    .circle-play-btn {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #5ff7ff 0%, #00f2fe 60%, #00b4d8 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.45);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      outline: none;
+      box-shadow: 
+        0 6px 18px rgba(0, 242, 254, 0.45),
+        0 0 20px rgba(0, 242, 254, 0.35);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .circle-play-btn::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1px solid var(--neon-cyan);
+      opacity: 0.6;
+      transition: all 0.25s ease;
+    }
+
+    .circle-play-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 22px rgba(0, 242, 254, 0.55);
+    }
+    .circle-play-btn:active {
+      transform: scale(0.95);
+    }
+
+    .circle-play-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: #050811;
+      filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.3));
+    }
+
+    /* Views Layout */
+    .views-wrapper {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .view-panel {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      animation: softFadeIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    .view-panel.active {
+      display: flex;
+    }
+
+    @keyframes softFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .section-label {
+      font-size: 0.64rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    /* Station List: Exact zero-overflow, perfectly fitting 5 compact cards */
+    .station-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden; /* حذف هرگونه اسکرول بار اضافی */
+      padding: 0 2px;
+      flex: 1;
+      min-height: 0;
+      justify-content: space-between;
+    }
+
+    /* Station Cards: Compacted height + Strict internal clipping of glows */
+    .station-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 12px; /* کوتاه تر کردن قد کارت برای جا گرفتن بدون اسکرول */
+      height: 48px;
+      border-radius: 16px;
+      background: radial-gradient(ellipse at center, rgba(20, 26, 42, 0.9) 0%, rgba(10, 13, 22, 0.7) 100%);
+      border: 1px solid rgba(0, 242, 254, 0.16);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden !important; /* مهار کامل هرگونه هاله و جلوگیری از بیرون‌زدگی مستطیلی */
+      clip-path: inset(0 round 16px); /* برش قطعی لبه‌ها به فرم کپسول بدون لبه مستطیلی */
+      flex-shrink: 0;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+    }
+
+    /* نور و هاله تنها و تنها در داخل کپسول مجاز به پخش است */
+    .station-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: radial-gradient(
+        70px circle at var(--item-x, 50%) var(--item-y, 50%),
+        rgba(0, 242, 254, 0.22),
+        transparent 75%
+      );
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .station-item:hover {
+      border-color: rgba(0, 242, 254, 0.4);
+      background: radial-gradient(ellipse at center, rgba(24, 32, 52, 0.95) 0%, rgba(12, 16, 28, 0.8) 100%);
+      transform: translateX(2px);
+    }
+
+    .station-item:hover::before {
+      opacity: 1;
+    }
+
+    .station-item.active {
+      border-color: var(--neon-cyan);
+      background: radial-gradient(ellipse at center, rgba(16, 38, 60, 0.95) 0%, rgba(8, 20, 34, 0.85) 100%);
+      box-shadow: inset 0 0 12px rgba(0, 242, 254, 0.2); /* نور صرفاً اینست (داخل کپسول) */
+    }
+
+    .station-item.active::before {
+      opacity: 1;
+      background: radial-gradient(
+        circle at 50% 50%,
+        rgba(0, 242, 254, 0.18) 0%,
+        transparent 80%
+      );
+    }
+
+    /* Pixel Art Container on Card */
+    .station-pixel-box {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background: rgba(5, 7, 12, 0.95);
+      border: 1px solid rgba(0, 242, 254, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .station-item.active .station-pixel-box {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 8px rgba(0, 242, 254, 0.35);
+    }
+
+    .station-pixel-canvas {
+      width: 24px;
+      height: 24px;
+      image-rendering: pixelated;
+    }
+
+    .item-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      letter-spacing: 0.2px;
+      position: relative;
+      z-index: 1;
+      transition: color 0.2s ease;
+    }
+
+    .station-item.active .item-name {
+      color: #ffffff;
+      font-weight: 700;
+      text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+    }
+
+    /* Placeholders */
+    .placeholder-box {
+      flex: 1;
+      background: rgba(8, 10, 18, 0.45);
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      gap: 10px;
+    }
+
+    .placeholder-box svg {
+      width: 30px;
+      height: 30px;
+      stroke: var(--neon-cyan);
+      opacity: 0.75;
+      filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.3));
+    }
+
+    .placeholder-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .placeholder-desc {
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: var(--text-dim);
+      line-height: 1.5;
+      max-width: 240px;
+    }
+
+    /* Bottom Ambient Mask */
+    .bottom-ambient-mask {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 82px;
+      background: linear-gradient(to top, rgba(7, 8, 13, 0.98) 25%, rgba(7, 8, 13, 0.65) 65%, transparent 100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .floating-nav {
+      position: absolute;
+      bottom: 12px;
+      left: 18px;
+      right: 18px;
+      height: 54px;
+      border-radius: 27px;
+      background: radial-gradient(ellipse at center, rgba(20, 26, 42, 0.92) 0%, rgba(10, 13, 22, 0.55) 100%);
+      border: 1px solid rgba(0, 242, 254, 0.24);
+      box-shadow: 
+        0 14px 34px rgba(0, 0, 0, 0.75),
+        0 0 20px rgba(0, 242, 254, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 6px;
+      z-index: 20;
+      overflow: hidden;
+      --pointer-x: 50%;
+      --pointer-y: 50%;
+      --glow-opacity: 0;
+    }
+
+    .floating-nav::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        100px circle at var(--pointer-x) var(--pointer-y),
+        rgba(0, 242, 254, 0.28),
+        rgba(0, 180, 216, 0.12) 45%,
+        transparent 75%
+      );
+      opacity: var(--glow-opacity);
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+
+    .nav-active-aura {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 6px;
+      width: calc((100% - 12px) / 4);
+      border-radius: 20px;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 242, 254, 0.32) 0%, rgba(0, 180, 216, 0.12) 65%, transparent 100%);
+      filter: blur(4px);
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .nav-active-dot {
+      position: absolute;
+      bottom: 5px;
+      left: 6px;
+      width: calc((100% - 12px) / 4);
+      display: flex;
+      justify-content: center;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .nav-active-dot::after {
+      content: '';
+      width: 14px;
+      height: 2.5px;
+      border-radius: 4px;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+
+    .nav-tab {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-dim);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      transition: color 0.25s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .nav-tab svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+    }
+
+    .nav-tab span {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      opacity: 0.75;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .nav-tab.active {
+      color: #ffffff;
+    }
+
+    .nav-tab.active svg {
+      transform: translateY(-2px) scale(1.06);
+      stroke: var(--neon-cyan);
+      filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.5));
+    }
+
+    .nav-tab.active span {
+      opacity: 1;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <h1>Pocket Station</h1>
+    </header>
+
+    <!-- Master Audio Deck -->
+    <div class="deck-card">
+      <div class="now-title" id="now-title">Select a Station</div>
+
+      <div class="wave-wrapper">
+        <canvas id="wave-canvas"></canvas>
+      </div>
+
+      <div class="status-pill">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-label">Standby</span>
+      </div>
+
+      <div class="controls-dock">
+        <div class="arch-volume">
+          <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <input type="range" class="vol-slider" id="vol-slider" min="0" max="1" step="0.001" value="0.8">
+        </div>
+
+        <button class="circle-play-btn" id="play-btn" title="Toggle Play">
+          <svg id="play-icon" viewBox="0 0 24 24"><polygon points="7 4 20 12 7 20 7 4"></polygon></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Content Viewport -->
+    <div class="views-wrapper">
+      
+      <!-- TAB 1: Radio Streams with Animated Retro Pixel Icons -->
+      <section class="view-panel active" id="view-radio">
+        <div class="section-header-bar">
+          <div class="section-label">Broadcast Channels</div>
+        </div>
+        <ul class="station-list" id="station-list"></ul>
+      </section>
+
+      <!-- TAB 2: Modular System -->
+      <section class="view-panel" id="view-player">
+        <div class="section-header-bar">
+          <div class="section-label">Audio Deck</div>
+        </div>
+        <div class="placeholder-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+          <div class="placeholder-title">Sound Module</div>
+          <div class="placeholder-desc">Ready for your upcoming chosen architecture.</div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Extensions & FX -->
+      <section class="view-panel" id="view-plugins">
+        <div class="section-header-bar">
+          <div class="section-label">Audio Extensions</div>
+        </div>
+        <div class="placeholder-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+          <div class="placeholder-title">Modular Plugins</div>
+          <div class="placeholder-desc">Sleep Timer, Lo-Fi FX & Equalizer modules.</div>
+        </div>
+      </section>
+
+      <!-- TAB 4: User Menu & Settings -->
+      <section class="view-panel" id="view-menu">
+        <div class="section-header-bar">
+          <div class="section-label">Preferences</div>
+        </div>
+        <div class="placeholder-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+          </svg>
+          <div class="placeholder-title">Settings & Storage</div>
+          <div class="placeholder-desc">Custom Stream URLs & station management.</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Soft Bottom Fade Mask -->
+    <div class="bottom-ambient-mask"></div>
+
+    <!-- Floating Navigation Bar -->
+    <nav class="floating-nav" id="floating-nav">
+      <div class="nav-active-aura" id="nav-aura"></div>
+      <div class="nav-active-dot" id="nav-dot"></div>
+
+      <button class="nav-tab active" data-target="view-radio" data-index="0">
+        <svg viewBox="0 0 24 24">
+          <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path>
+          <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path>
+          <circle cx="12" cy="12" r="2"></circle>
+          <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path>
+          <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"></path>
+        </svg>
+        <span>Stream</span>
+      </button>
+
+      <button class="nav-tab" data-target="view-player" data-index="1">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <span>Deck</span>
+      </button>
+
+      <button class="nav-tab" data-target="view-plugins" data-index="2">
+        <svg viewBox="0 0 24 24">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span>Plugins</span>
+      </button>
+
+      <button class="nav-tab" data-target="view-menu" data-index="3">
+        <svg viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+        </svg>
+        <span>Menu</span>
+      </button>
+    </nav>
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+
+  <script>
+    /* 1. STATE & STORAGE */
+    const STORAGE_KEY = 'pocket_station_pixel_deck_v11';
+
+    const defaultStations = [
+      { id: 'classic', name: "Swiss Classic", url: "https://stream.srg-ssr.ch/m/rsc_de/mp3_128" },
+      { id: 'cinemix', name: "Cinemix Soundtracks", url: "https://kathy.torontocast.com:1825/stream" },
+      { id: 'rock', name: "Rock House", url: "https://listen.181fm.com/181-eagle_128k.mp3" },
+      { id: 'eighties', name: "Awesome 80s", url: "https://listen.181fm.com/181-awesome80s_128k.mp3" },
+      { id: 'sixties', name: "Good Time 60s", url: "https://listen.181fm.com/181-goodtime_128k.mp3" }
+    ];
+
+    const AppState = {
+      stations: [...defaultStations],
+      currentStationIndex: -1,
+      volume: 0.8,
+      activeTabIndex: 0,
+      isPlaying: false,
+
+      load() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (saved) {
+            if (typeof saved.volume === 'number') this.volume = saved.volume;
+            if (typeof saved.currentStationIndex === 'number') this.currentStationIndex = saved.currentStationIndex;
+            if (Array.isArray(saved.stations) && saved.stations.length) this.stations = saved.stations;
+          }
+        } catch (e) {
+          console.warn('Fallback load:', e);
+        }
+      },
+
+      save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            volume: this.volume,
+            currentStationIndex: this.currentStationIndex,
+            stations: this.stations
+          }));
+        } catch (e) {}
+      }
+    };
+
+    /* 2. CORE DOM & AUDIO */
+    const audio = document.getElementById('audio');
+    const nowTitle = document.getElementById('now-title');
+    const statusDot = document.getElementById('status-dot');
+    const statusLabel = document.getElementById('status-label');
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+    const volSlider = document.getElementById('vol-slider');
+    const stationList = document.getElementById('station-list');
+
+    function initApp() {
+      AppState.load();
+      audio.volume = AppState.volume;
+      volSlider.value = AppState.volume;
+      renderStations();
+      initPixelAnimationLoop();
+
+      if (AppState.currentStationIndex >= 0 && AppState.stations[AppState.currentStationIndex]) {
+        const s = AppState.stations[AppState.currentStationIndex];
+        nowTitle.innerText = s.name;
+        highlightStation(AppState.currentStationIndex);
+      }
+    }
+
+    function renderStations() {
+      stationList.innerHTML = '';
+      AppState.stations.forEach((s, idx) => {
+        const li = document.createElement('li');
+        li.className = 'station-item';
+        li.id = `station-${s.id}`;
+        li.innerHTML = `
+          <div class="station-pixel-box">
+            <canvas class="station-pixel-canvas" id="canvas-${s.id}" width="16" height="16"></canvas>
+          </div>
+          <span class="item-name">${s.name}</span>
+        `;
+        li.onclick = () => selectStation(idx);
+
+        li.addEventListener('pointermove', (e) => {
+          const rect = li.getBoundingClientRect();
+          li.style.setProperty('--item-x', `${e.clientX - rect.left}px`);
+          li.style.setProperty('--item-y', `${e.clientY - rect.top}px`);
+        });
+
+        stationList.appendChild(li);
+      });
+    }
+
+    function highlightStation(index) {
+      document.querySelectorAll('.station-item').forEach((el, i) => {
+        el.classList.toggle('active', i === index);
+      });
+    }
+
+    function setStatus(text, type) {
+      statusLabel.innerText = text;
+      statusDot.className = 'status-dot ' + (type || '');
+    }
+
+    function updatePlayIcon(playing) {
+      AppState.isPlaying = playing;
+      if (playing) {
+        playIcon.innerHTML = '<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>';
+      } else {
+        playIcon.innerHTML = '<polygon points="7 4 20 12 7 20 7 4"></polygon>';
+      }
+    }
+
+    function selectStation(index) {
+      AppState.currentStationIndex = index;
+      AppState.save();
+
+      const s = AppState.stations[index];
+      nowTitle.innerText = s.name;
+      setStatus('Connecting', 'loading');
+
+      audio.src = s.url;
+      audio.load();
+      audio.play().catch(() => setStatus('Offline', 'error'));
+      highlightStation(index);
+    }
+
+    playBtn.onclick = () => {
+      if (AppState.currentStationIndex === -1) {
+        selectStation(0);
+        return;
+      }
+      if (!audio.src) {
+        selectStation(AppState.currentStationIndex);
+        return;
+      }
+      if (audio.paused) {
+        audio.play();
+      } else {
+        audio.pause();
+      }
+    };
+
+    volSlider.oninput = (e) => {
+      const val = parseFloat(e.target.value);
+      audio.volume = val;
+      AppState.volume = val;
+      AppState.save();
+    };
+
+    audio.onplaying = () => {
+      setStatus('Live Stream', 'live');
+      updatePlayIcon(true);
+    };
+
+    audio.onpause = () => {
+      setStatus('Paused', '');
+      updatePlayIcon(false);
+    };
+
+    audio.onwaiting = () => setStatus('Buffering', 'loading');
+    audio.onerror = () => {
+      setStatus('Server Error', 'error');
+      updatePlayIcon(false);
+    };
+
+    /* 3. PROCEDURAL PIXEL-ART (16x16, Relaxed Pace) */
+    function initPixelAnimationLoop() {
+      const cClassic = document.getElementById('canvas-classic');
+      const cCinemix = document.getElementById('canvas-cinemix');
+      const cRock = document.getElementById('canvas-rock');
+      const cEighties = document.getElementById('canvas-eighties');
+      const cSixties = document.getElementById('canvas-sixties');
+
+      if (!cClassic || !cCinemix || !cRock || !cEighties || !cSixties) return;
+
+      const ctxCl = cClassic.getContext('2d');
+      const ctxCi = cCinemix.getContext('2d');
+      const ctxRo = cRock.getContext('2d');
+      const ctxEi = cEighties.getContext('2d');
+      const ctxSi = cSixties.getContext('2d');
+
+      let tick = 0;
+
+      function renderStationPixels() {
+        tick++;
+
+        // 1. SWISS CLASSIC: Vintage Grand Piano with moving keys
+        ctxCl.clearRect(0, 0, 16, 16);
+        ctxCl.fillStyle = '#1e1b4b';
+        ctxCl.fillRect(2, 4, 12, 6);
+        ctxCl.fillStyle = '#312e81';
+        ctxCl.fillRect(3, 3, 10, 2);
+        ctxCl.fillStyle = '#fbbf24';
+        ctxCl.fillRect(6, 2, 4, 1);
+
+        ctxCl.fillStyle = '#f8fafc';
+        ctxCl.fillRect(3, 10, 10, 4);
+        ctxCl.fillStyle = '#090d16';
+        ctxCl.fillRect(4, 10, 1, 2);
+        ctxCl.fillRect(6, 10, 1, 2);
+        ctxCl.fillRect(8, 10, 1, 2);
+        ctxCl.fillRect(10, 10, 1, 2);
+
+        const keyStep = Math.floor(tick / 16) % 4;
+        ctxCl.fillStyle = '#00f2fe';
+        if (keyStep === 0) ctxCl.fillRect(4, 12, 1, 2);
+        else if (keyStep === 1) ctxCl.fillRect(7, 12, 1, 2);
+        else if (keyStep === 2) ctxCl.fillRect(9, 12, 1, 2);
+        else ctxCl.fillRect(11, 12, 1, 2);
+
+        // 2. CINEMIX SOUNDTRACKS: Vintage Film Camera
+        ctxCi.clearRect(0, 0, 16, 16);
+        ctxCi.fillStyle = '#94a3b8';
+        ctxCi.fillRect(3, 2, 4, 4);
+        ctxCi.fillRect(9, 2, 4, 4);
+        ctxCi.fillStyle = '#020617';
+        const reelPhase = Math.floor(tick / 14) % 2;
+        if (reelPhase === 0) {
+          ctxCi.fillRect(4, 3, 2, 2);
+          ctxCi.fillRect(10, 3, 2, 2);
+        } else {
+          ctxCi.fillRect(5, 3, 1, 2);
+          ctxCi.fillRect(11, 3, 1, 2);
+        }
+
+        ctxCi.fillStyle = '#334155';
+        ctxCi.fillRect(2, 6, 9, 6);
+        ctxCi.fillStyle = '#00f2fe';
+        ctxCi.fillRect(11, 7, 2, 4);
+        ctxCi.fillRect(13, 6, 2, 6);
+
+        if (Math.floor(tick / 20) % 2 === 0) {
+          ctxCi.fillStyle = '#ff3366';
+          ctxCi.fillRect(3, 7, 1, 1);
+        }
+
+        ctxCi.fillStyle = '#64748b';
+        ctxCi.fillRect(5, 12, 3, 1);
+        ctxCi.fillRect(4, 13, 1, 2);
+        ctxCi.fillRect(8, 13, 1, 2);
+
+        // 3. ROCK HOUSE: Electric Guitar
+        ctxRo.clearRect(0, 0, 16, 16);
+        ctxRo.fillStyle = '#f8fafc';
+        ctxRo.fillRect(11, 2, 2, 2);
+        ctxRo.fillStyle = '#94a3b8';
+        ctxRo.fillRect(8, 4, 3, 3);
+
+        ctxRo.fillStyle = '#ff3366';
+        ctxRo.fillRect(4, 7, 5, 5);
+        ctxRo.fillRect(3, 8, 2, 5);
+        ctxRo.fillRect(6, 11, 3, 3);
+        ctxRo.fillStyle = '#be123c';
+        ctxRo.fillRect(4, 8, 2, 3);
+
+        ctxRo.fillStyle = '#0f172a';
+        ctxRo.fillRect(6, 8, 2, 2);
+
+        const strShift = Math.floor(tick / 12) % 2;
+        ctxRo.fillStyle = '#00f2fe';
+        ctxRo.fillRect(7, 5, 1, 4 + strShift);
+
+        // 4. AWESOME 80s: Walkman
+        ctxEi.clearRect(0, 0, 16, 16);
+        ctxEi.fillStyle = '#0284c7';
+        ctxEi.fillRect(2, 3, 12, 10);
+        ctxEi.fillStyle = '#0369a1';
+        ctxEi.fillRect(3, 2, 10, 1);
+
+        ctxEi.fillStyle = '#090d16';
+        ctxEi.fillRect(4, 5, 8, 5);
+
+        ctxEi.fillStyle = '#f8fafc';
+        ctxEi.fillRect(5, 6, 2, 2);
+        ctxEi.fillRect(9, 6, 2, 2);
+
+        const wPhase = Math.floor(tick / 15) % 2;
+        ctxEi.fillStyle = '#ff3366';
+        if (wPhase === 0) {
+          ctxEi.fillRect(5, 6, 1, 1);
+          ctxEi.fillRect(9, 6, 1, 1);
+        } else {
+          ctxEi.fillRect(6, 7, 1, 1);
+          ctxEi.fillRect(10, 7, 1, 1);
+        }
+
+        ctxEi.fillStyle = '#e2e8f0';
+        ctxEi.fillRect(14, 5, 1, 2);
+        ctxEi.fillRect(14, 8, 1, 2);
+
+        // 5. GOOD TIME 60s: Saxophone
+        ctxSi.clearRect(0, 0, 16, 16);
+        ctxSi.fillStyle = '#d97706';
+        ctxSi.fillRect(4, 4, 2, 6);
+        ctxSi.fillRect(4, 10, 4, 3);
+        ctxSi.fillRect(7, 7, 4, 5);
+        ctxSi.fillRect(10, 5, 3, 4);
+
+        ctxSi.fillStyle = '#fbbf24';
+        ctxSi.fillRect(5, 5, 1, 4);
+        ctxSi.fillRect(5, 11, 2, 1);
+        ctxSi.fillRect(8, 8, 2, 2);
+        ctxSi.fillRect(10, 6, 2, 2);
+
+        ctxSi.fillStyle = '#f8fafc';
+        ctxSi.fillRect(3, 3, 2, 2);
+
+        const noteY = 4 - (Math.floor(tick / 14) % 4);
+        ctxSi.fillStyle = '#00f2fe';
+        ctxSi.fillRect(12, noteY, 2, 1);
+        ctxSi.fillRect(13, noteY + 1, 1, 2);
+
+        requestAnimationFrame(renderStationPixels);
+      }
+
+      renderStationPixels();
+    }
+
+    /* 4. DOCK LOGIC */
+    const floatingNav = document.getElementById('floating-nav');
+    const navAura = document.getElementById('nav-aura');
+    const navDot = document.getElementById('nav-dot');
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const viewPanels = document.querySelectorAll('.view-panel');
+
+    function switchTab(index, targetId) {
+      AppState.activeTabIndex = index;
+      navAura.style.transform = `translateX(${index * 100}%)`;
+      navDot.style.transform = `translateX(${index * 100}%)`;
+
+      navTabs.forEach((tab, i) => tab.classList.toggle('active', i === index));
+      viewPanels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
+    }
+
+    navTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const index = parseInt(tab.getAttribute('data-index'), 10);
+        const targetId = tab.getAttribute('data-target');
+        switchTab(index, targetId);
+      });
+    });
+
+    function handleNavPointerMove(clientX, clientY) {
+      const rect = floatingNav.getBoundingClientRect();
+      floatingNav.style.setProperty('--pointer-x', `${clientX - rect.left}px`);
+      floatingNav.style.setProperty('--pointer-y', `${clientY - rect.top}px`);
+      floatingNav.style.setProperty('--glow-opacity', '1');
+
+      navTabs.forEach(tab => {
+        const tabRect = tab.getBoundingClientRect();
+        const tabCenterX = tabRect.left + tabRect.width / 2;
+        const dist = Math.abs(clientX - tabCenterX);
+        if (dist < 90) {
+          const pull = (1 - dist / 90) * 3.5;
+          tab.style.transform = `translateY(${-pull}px)`;
+        } else {
+          tab.style.transform = 'translateY(0px)';
+        }
+      });
+    }
+
+    function resetNavPointer() {
+      floatingNav.style.setProperty('--glow-opacity', '0');
+      navTabs.forEach(tab => tab.style.transform = 'translateY(0px)');
+    }
+
+    floatingNav.addEventListener('pointermove', (e) => handleNavPointerMove(e.clientX, e.clientY));
+    floatingNav.addEventListener('pointerdown', (e) => handleNavPointerMove(e.clientX, e.clientY));
+    floatingNav.addEventListener('pointerleave', resetNavPointer);
+    floatingNav.addEventListener('pointerup', () => setTimeout(resetNavPointer, 250));
+
+    /* 5. WAVE CANVAS */
+    const canvas = document.getElementById('wave-canvas');
+    const ctx = canvas.getContext('2d');
+    let step = 0;
+    let currentAmplitude = 0;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function drawWaves() {
+      const width = canvas.width / window.devicePixelRatio;
+      const height = canvas.height / window.devicePixelRatio;
+      const centerY = height / 2;
+
+      ctx.clearRect(0, 0, width, height);
+
+      const targetAmplitude = AppState.isPlaying ? 8.5 : 1.2;
+      currentAmplitude += (targetAmplitude - currentAmplitude) * 0.05;
+
+      ctx.beginPath();
+      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = 'rgba(255, 51, 102, 0.85)';
+      for (let x = 0; x <= width; x++) {
+        const y = centerY + Math.sin(x * 0.02 + step) * currentAmplitude * Math.sin(x * 0.008 + step * 0.5);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = 'rgba(225, 29, 72, 0.65)';
+      for (let x = 0; x <= width; x++) {
+        const y = centerY + Math.sin(x * 0.028 - step * 1.2) * (currentAmplitude * 0.75);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = 'rgba(255, 107, 107, 0.4)';
+      for (let x = 0; x <= width; x++) {
+        const y = centerY + Math.cos(x * 0.018 + step * 0.8) * (currentAmplitude * 0.5);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      step += AppState.isPlaying ? 0.035 : 0.01;
+      requestAnimationFrame(drawWaves);
+    }
+
+    initApp();
+    resizeCanvas();
+    drawWaves();
+  </script>
+</body>
+</html>
