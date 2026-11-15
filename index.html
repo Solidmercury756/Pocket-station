@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pocket Station</title>
   
+  <!-- PWA Meta Tags & Manifest -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#07080d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pocket Station">
+  <link rel="apple-touch-icon" href="./icon.png">
+  <link rel="icon" type="image/png" href="./icon.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,12 +41,12 @@
       font-family: var(--font-main);
       user-select: none;
       -webkit-tap-highlight-color: transparent;
-      scrollbar-width: none; /* حذف قطعی اسکرول‌بار در فایرفاکس */
-      -ms-overflow-style: none; /* حذف قطعی در IE/Edge */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
 
     *::-webkit-scrollbar {
-      display: none !important; /* حذف نوار خاکستری پایین صفحه در کروم و وب‌کیت */
+      display: none !important;
       width: 0 !important;
       height: 0 !important;
     }
@@ -289,7 +299,6 @@
       filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.3));
     }
 
-    /* Views Layout */
     .views-wrapper {
       flex: 1;
       min-height: 0;
@@ -333,38 +342,35 @@
       font-weight: 700;
     }
 
-    /* Station List: Exact zero-overflow, perfectly fitting 5 compact cards */
     .station-list {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      overflow: hidden; /* حذف هرگونه اسکرول بار اضافی */
+      overflow: hidden;
       padding: 0 2px;
       flex: 1;
       min-height: 0;
       justify-content: space-between;
     }
 
-    /* Station Cards: Compacted height + Strict internal clipping of glows */
     .station-item {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 6px 12px; /* کوتاه تر کردن قد کارت برای جا گرفتن بدون اسکرول */
+      padding: 6px 12px;
       height: 48px;
       border-radius: 16px;
       background: radial-gradient(ellipse at center, rgba(20, 26, 42, 0.9) 0%, rgba(10, 13, 22, 0.7) 100%);
       border: 1px solid rgba(0, 242, 254, 0.16);
       cursor: pointer;
       position: relative;
-      overflow: hidden !important; /* مهار کامل هرگونه هاله و جلوگیری از بیرون‌زدگی مستطیلی */
-      clip-path: inset(0 round 16px); /* برش قطعی لبه‌ها به فرم کپسول بدون لبه مستطیلی */
+      overflow: hidden !important;
+      clip-path: inset(0 round 16px);
       flex-shrink: 0;
       transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
     }
 
-    /* نور و هاله تنها و تنها در داخل کپسول مجاز به پخش است */
     .station-item::before {
       content: '';
       position: absolute;
@@ -393,7 +399,7 @@
     .station-item.active {
       border-color: var(--neon-cyan);
       background: radial-gradient(ellipse at center, rgba(16, 38, 60, 0.95) 0%, rgba(8, 20, 34, 0.85) 100%);
-      box-shadow: inset 0 0 12px rgba(0, 242, 254, 0.2); /* نور صرفاً اینست (داخل کپسول) */
+      box-shadow: inset 0 0 12px rgba(0, 242, 254, 0.2);
     }
 
     .station-item.active::before {
@@ -405,7 +411,6 @@
       );
     }
 
-    /* Pixel Art Container on Card */
     .station-pixel-box {
       width: 34px;
       height: 34px;
@@ -449,7 +454,6 @@
       text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
     }
 
-    /* Placeholders */
     .placeholder-box {
       flex: 1;
       background: rgba(8, 10, 18, 0.45);
@@ -486,7 +490,6 @@
       max-width: 240px;
     }
 
-    /* Bottom Ambient Mask */
     .bottom-ambient-mask {
       position: absolute;
       bottom: 0;
@@ -660,7 +663,7 @@
     <!-- Content Viewport -->
     <div class="views-wrapper">
       
-      <!-- TAB 1: Radio Streams with Animated Retro Pixel Icons -->
+      <!-- TAB 1: Radio Streams -->
       <section class="view-panel active" id="view-radio">
         <div class="section-header-bar">
           <div class="section-label">Broadcast Channels</div>
@@ -771,6 +774,13 @@
   <audio id="audio" preload="none"></audio>
 
   <script>
+    /* REGISTER PWA SERVICE WORKER */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+
     /* 1. STATE & STORAGE */
     const STORAGE_KEY = 'pocket_station_pixel_deck_v11';
 
@@ -955,7 +965,7 @@
       function renderStationPixels() {
         tick++;
 
-        // 1. SWISS CLASSIC: Vintage Grand Piano with moving keys
+        // 1. SWISS CLASSIC: Vintage Grand Piano
         ctxCl.clearRect(0, 0, 16, 16);
         ctxCl.fillStyle = '#1e1b4b';
         ctxCl.fillRect(2, 4, 12, 6);
